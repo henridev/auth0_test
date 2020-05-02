@@ -1,24 +1,72 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { useState } from "react";
+import "./App.css";
+import { Route, Redirect } from "react-router-dom";
 
-function App() {
+import Home from "./pages/Home";
+import Callback from "./pages/Callback";
+import Profile from "./pages/Profile";
+import Public from "./pages/Public";
+import Private from "./pages/Private";
+
+import Navigation from "./components/Navigation";
+import Auth from "./Auth/Auth";
+import Courses from "./pages/Courses";
+
+function App(props) {
+  console.log("props.history", props.history);
+  const [AuthInstance, setAuth] = useState(new Auth(props.history));
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <Navigation auth={AuthInstance} />
+      <div className="body">
+        <Route
+          exact
+          path="/"
+          render={(props) => <Home auth={AuthInstance} {...props} />}
+        />
+        <Route
+          exact
+          path="/public"
+          render={(props) => <Public auth={AuthInstance} {...props} />}
+        />
+        <Route
+          exact
+          path="/private"
+          render={(props) =>
+            AuthInstance.isAuthenticated ? (
+              <Private auth={AuthInstance} {...props} />
+            ) : (
+              <Redirect to="/" />
+            )
+          }
+        />
+        <Route
+          exact
+          path="/courses"
+          render={(props) =>
+            AuthInstance.isAuthenticated &&
+            AuthInstance.userHasScopes(["read:courses"]) ? (
+              <Courses auth={AuthInstance} {...props} />
+            ) : (
+              <Redirect to="/" />
+            )
+          }
+        />
+        <Route
+          path="/profile"
+          render={(props) =>
+            AuthInstance.isAuthenticated ? (
+              <Profile auth={AuthInstance} {...props} />
+            ) : (
+              <Redirect to="/" />
+            )
+          }
+        />
+        <Route
+          path="/callback"
+          render={(props) => <Callback auth={AuthInstance} {...props} />}
+        />
+      </div>
     </div>
   );
 }
